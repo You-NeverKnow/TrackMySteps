@@ -10,7 +10,6 @@ class OutputScreen extends React.Component {
     return (
       <Fragment>
         <Text>Results</Text>
-        {/*<Text>{stack[0]}</Text>*/}
         <Table borderStyle={{borderWidth: 2, borderColor: '#c8e1ff'}}>
           <Rows data={stack}/>
         </Table>

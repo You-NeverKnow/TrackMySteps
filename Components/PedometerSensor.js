@@ -1,18 +1,17 @@
 import React from "react";
 import { Pedometer } from "expo";
-import {action, observable} from "mobx";
 
 export default class PedometerSensor {
-  constructor() {
+  constructor(callback) {
+    this.setStateCallBack = callback;
     this.currentStepCount = 0;
     this._subscribe();
   }
-  @observable currentStepCount;
 
-  @action
   _subscribe = () => {
     this._subscription = Pedometer.watchStepCount(result => {
-      this.currentStepCount = result.steps
+      this.currentStepCount = result.steps;
+      this.setStateCallBack(this.currentStepCount);
     });
   };
   _unsubscribe = () => {
