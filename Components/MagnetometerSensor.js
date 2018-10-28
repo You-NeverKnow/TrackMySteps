@@ -6,6 +6,7 @@ export default class Compass {
   constructor(callback) {
     this.setStateCallback = callback;
     this.magnetometer= '0';
+    Magnetometer.setUpdateInterval(5000);
     this._subscribe();
   };
 
