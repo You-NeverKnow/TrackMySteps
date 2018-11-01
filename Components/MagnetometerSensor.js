@@ -6,7 +6,7 @@ export default class Compass {
   constructor(callback) {
     this.setStateCallback = callback;
     this.magnetometer= '0';
-    Magnetometer.setUpdateInterval(5000);
+    Magnetometer.setUpdateInterval(7000);
     this._subscribe();
   };
 
@@ -41,26 +41,14 @@ export default class Compass {
   };
 
   _direction = (degree) => {
-    if (degree >= 22.5 && degree < 67.5) {
-      return 'NE';
-    }
-    else if (degree >= 67.5 && degree < 112.5) {
+    if (degree >= 67.5 && degree < 135) {
       return 'E';
     }
-    else if (degree >= 112.5 && degree < 157.5) {
-      return 'SE';
-    }
-    else if (degree >= 157.5 && degree < 202.5) {
+    else if (degree >= 135 && degree < 225) {
       return 'S';
     }
-    else if (degree >= 202.5 && degree < 247.5) {
-      return 'SW';
-    }
-    else if (degree >= 247.5 && degree < 292.5) {
+    else if (degree >= 225 && degree < 315) {
       return 'W';
-    }
-    else if (degree >= 292.5 && degree < 337.5) {
-      return 'NW';
     }
     else {
       return 'N';

@@ -1,74 +1,71 @@
 import React, {Fragment} from "react";
 import {Button} from "react-native-elements";
 import Tracker from "../Components/Tracker";
-import PedometerSensor from "../Components/PedometerSensor";
 import Compass from "../Components/MagnetometerSensor";
+import { Pedometer } from "expo";
 
 class MainScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      direction: 'N',
-      stepCount : 0,
       stack: [["", 0], ["", 0]],
-      lock: false,
-      tempStepCount: 0
+      lastElement: ["", 0],
+      lastDate: new Date()
     };
-    this.createPedometer();
     this.createCompass();
   }
-  createCompass() {
-    this.compass = new Compass( newDirection => {
-      this.state.lock = true;
-      if (newDirection === this.state.direction) {
+
+  pedometerRecentCountCallback = (steps, newDirection, currentDate) => {
+    console.log("Last date: " + this.state.lastDate);
+    console.log("Current date: " + currentDate);
+    console.log("Steps: " + steps);
+    this.setState({lastDate: currentDate});
+    if (newDirection === this.state.lastElement[0]) {
         let updatedStack = [...this.state.stack];
-        updatedStack[updatedStack.length-1][1] += this.state.stepCount ;
-        this.setState({stack: updatedStack})
+        let newLastElement = [newDirection, this.state.lastElement[1] + steps];
+        updatedStack[updatedStack.length-1] = [newDirection, this.state.lastElement[1] + steps];
+
+        this.setState({stack: updatedStack,
+                      lastElement: newLastElement})
       }
-      else {
-        let updatedStack = [...this.state.stack, [newDirection, 0]];
-        this.setState({ stepCount: 0,
-                        direction: newDirection,
-                        stack: updatedStack,
-                      })
-      }
-      this.state.lock = false;
-    });
+    else {
+      let newLastElement = [newDirection, 0];
+      let updatedStack = [...this.state.stack, newLastElement];
+      updatedStack[updatedStack.length-2][1] =
+                                  this.state.lastElement[1] + steps;
+      this.setState({ stack: updatedStack,
+                      lastElement: newLastElement
+                    })
+    }
   };
 
-  createPedometer() {
-    this.pedometer = new PedometerSensor( newSteps =>
-                    {
-                      if(!this.state.lock) {
-                        this.setState({
-                          stepCount: newSteps - this.state.stepCount +
-                                            this.state.tempStepCount,
-                        });
-                        this.setState({tempStepCount: 0});
-                      } else {
-                        this.setState({tempStepCount: newSteps});
-                      }
-    });
+  compassCallback =  newDirection => {
+    let currentDate = new Date();
+    Pedometer.getStepCountAsync(this.state.lastDate, currentDate)
+      .then(({steps}) =>
+        this.pedometerRecentCountCallback(steps, newDirection, currentDate));
   };
 
-  componentWillUnmount() {
-    this.pedometer._unsubscribe();
-    this.compass._unsubscribe();
-  }
+  createCompass() {
+    this.compass = new Compass(this.compassCallback);
+  };
 
   render() {
     return (
 
       <Fragment>
           <Tracker name={"Current"}
-                   direction = {this.state.direction}
-                   steps={this.state.stepCount}/>
+                   direction = {this.state.lastElement[0]}
+                   steps={this.state.lastElement[1]}/>
           <Tracker name={"Previous"}
-                   direction = {this.state.stack[this.state.stack.length-1][0]}
-                   steps={this.state.stack[this.state.stack.length-1][1]}/>
+                   direction = {this.state.stack[this.state.stack.length - 2][0]}
+                   steps={this.state.stack[this.state.stack.length - 2][1]}/>
         <Button title={"Stop tracking"}
-                  onPress={() => this.props.navigation.navigate('Output',
-                    {stack: this.state.stack.slice(2, this.state.stack.length)})}/>
+                  onPress={() => {
+                    this.compass._unsubscribe();
+                    this.props.navigation.navigate('Output',
+                    {stack: this.state.stack.filter(x => x[1]!==0)})
+                  }}/>
       </Fragment>
     );
   }
